@@ -1,0 +1,8 @@
+facility_type=level_of_education
+formhub_photo_id=photo
+num_tchrs_total=num_tchrs_num_tchrs_total
+school_1kmplus_catchment_area=km_to_catchment_area > 1
+potable_water=(water_pipe_water == "True" and pipe_water_repair_time == "yes") or (water_tube_well == "True" and borehole_tubewell_repair_time == "yes")
+num_tchrs_with_nce=num_tchrs_qualification_num_tchrs_w_nce
+num_textbooks=case level_of_education in ["primary_only", "preprimary_and_primary"]: manuals_pry_num_math_textbook_pry + manuals_pry_num_english_textbook_pry + manuals_pry_num_soc_science_textbook_pry + manuals_pry_num_science_textbook_pry, level_of_education in ["junior_and_senior_sec", "juniors_sec_only"]: manuals_js_num_math_textbook_js + manuals_js_num_english_textbook_js + manuals_js_num_soc_science_textbook_js + manuals_js_num_science_textbook_js, level_of_education in ["primary_and_junior_sec", "primary_junior_and_senior_sec"]: manuals_pry_num_math_textbook_pry + manuals_pry_num_english_textbook_pry + manuals_pry_num_soc_science_textbook_pry + manuals_pry_num_science_textbook_pry + manuals_js_num_math_textbook_js + manuals_js_num_english_textbook_js + manuals_js_num_soc_science_textbook_js + manuals_js_num_science_textbook_js, default: 0
+textbook_to_pupil_ratio=num_textbooks / num_students_total_gender_num_students_total

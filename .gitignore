@@ -24,5 +24,7 @@ pip-log.txt
 *.mo
 
 # Data files
-*.csv
 *.p
+
+# Output files (for now?)
+*.log
