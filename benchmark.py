@@ -26,6 +26,7 @@ def run_test_suite(dataset_file_path_list):
         d['col'] = info['num_columns']
         d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
         d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
+        # following needs pybamboo fixes
         #d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
         d['update_1_time'] = time_to_add_1_update(dataset)
         d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
@@ -142,12 +143,13 @@ if __name__ == "__main__":
     curr_time = time.strftime('%Y-%m-%d-%H-%M-%S')
     hostname = os.uname()[1]
     outfile = open('logs/%s-%s.log' % (hostname, curr_time), 'wb')
+    results = []
     for test_size in test_sizes:
         test_str = str(test_size)
         water_file = DIR + test_size + '/water.csv'
         education_file = DIR + test_size + '/education.csv'
-
-        #write_to_csv(run_test_suite([water_file, education_file]) )
-        write_to_csv(run_test_suite([water_file]), outfile)
+        results = results + run_test_suite([water_file])
+        #results = results + run_test_suite([water_file, education_file])
+    write_to_csv(results, outfile)
     outfile.close()
 
