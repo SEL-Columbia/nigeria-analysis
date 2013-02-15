@@ -25,9 +25,11 @@ def run_test_suite(dataset_file_path_list):
         d['row'] = info['num_rows']
         d['col'] = info['num_columns']
         d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
-        d['add_5_calculations_time'] = time_to_add_5_calculations(dataset)
+        d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
+        #d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
         d['update_1_time'] = time_to_add_1_update(dataset)
-        d['update_5_time'] = time_to_add_5_update(dataset)
+        d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
+        d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
         dataset.delete()
         alldata.append(d)
     return alldata
@@ -61,7 +63,7 @@ def time_to_add_1_calculations(dataset):
     after = time.time()
     return after - before
 
-def time_to_add_5_calculations(dataset):
+def time_to_add_5_calculations_1by1(dataset):
     info = dataset.get_info()
     calcs = ['true = "T"', 'f = "F"', 'one = "1"', 'two = "2"', 'to = "To"']
     # TODO: more sophisticated calculations?
@@ -69,12 +71,14 @@ def time_to_add_5_calculations(dataset):
     #    if item['simpletype'] == 'float':
     #        calc_col_1 = itemkey
     #        break
+    sleep_between_submissions = 0
     calc_col_1 = '_gps_latitude'
     before = time.time()
     for calc in calcs:
         dataset.add_calculation(calc)
+        time.sleep(sleep_between_submissions)
     after = time.time()
-    return after - before
+    return after - before - sleep_between_submissions * len(calcs)
 
 def time_to_add_1_update(dataset):
     # TODO: more sophisticated updates
@@ -84,7 +88,21 @@ def time_to_add_1_update(dataset):
     after = time.time()
     return after - before
 
-def time_to_add_5_update(dataset):
+def time_to_add_5_update_1by1(dataset):
+    updates = [{"mylga" : "test"},
+               {"mylga" : "test1"},
+               {"mylga" : "test2"},
+               {"mylga" : "test3"},
+               {"mylga" : "test4"}]
+    sleep_between_submissions = 1
+    before = time.time()
+    for update in updates:
+        dataset.update_data([update])
+        time.sleep(1)
+    after = time.time()
+    return after - before - sleep_between_submissions * len(updates)
+
+def time_to_add_5_update_batch(dataset):
     updates = [{"mylga" : "test"},
                {"mylga" : "test1"},
                {"mylga" : "test2"},
@@ -105,7 +123,7 @@ def time_till_import_is_finished(dataset):
     return after - before
 
 if __name__ == "__main__":
-    valid_test_sizes = ['100', '1000', '10000', '100000']
+    valid_test_sizes = ['1', '10', '100', '1000', '10000', '100000']
     test_sizes = sys.argv[1:]
     invalid_test_size = len(test_sizes) == 0 or len([x for x in test_sizes\
             if x not in valid_test_sizes]) > 1
@@ -115,8 +133,8 @@ if __name__ == "__main__":
         print """provide size of datasets, like one of:
                    python benchmark.py 1000
                    python benchmark.py 100 1000 10000
-                Allowed test sizes are 10 100 1000 10000 and 100000:
-             """
+                Allowed test sizes are %s
+             """ % " ".join(valid_test_sizes) 
         sys.exit()
 
     DIR = 'csvs/'
