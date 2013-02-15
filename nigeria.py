@@ -8,7 +8,7 @@ from pybamboo.dataset import Dataset
 
 PROD_BAMBOO_ID_FILE = 'ids/ids.prod.json'
 DEV_BAMBOO_ID_FILE = 'ids/ids.dev.json'
-DEV_BAMBOO = False
+DEV_BAMBOO = True
 
 # set bamboo instance
 if DEV_BAMBOO:

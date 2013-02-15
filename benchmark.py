@@ -1,3 +1,5 @@
+import csv
+import itertools
 import time
 import json
 import sys
@@ -16,50 +18,49 @@ def run_test_suite(dataset_file_path_list):
         d = {}
         d['hostname'] = os.uname()[1]
         d['bamboo_url'] = URL
-        d['git_sha'] = '' # TODO: pull in git-sha/version from pybamboo/bamboo
         d['unix_time'] = time.time()
         conn = Connection(url=URL)
+        d['commit'] = conn.version['commit']
+        d['branch'] = conn.version['branch']
         dataset = Dataset(connection=conn, path=dataset_name)
         d['import_time'] = time_till_import_is_finished(dataset)
         info = dataset.get_info()
         d['row'] = info['num_rows']
         d['col'] = info['num_columns']
-        d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
-        d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
+        #d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
+        #d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
         # following needs pybamboo fixes
         #d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
-        d['update_1_time'] = time_to_add_1_update(dataset)
-        d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
-        d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
+        #d['update_1_time'] = time_to_add_1_update(dataset)
+        #d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
+        #d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
         dataset.delete()
         alldata.append(d)
     return alldata
 
-def write_to_csv(dict_list, outfile):
-    """ Take a dict_list, like [{a: 'foo', b: 'baz', ...}, {a: 'foo2', ...}...]
-      into a csv like 
-        a,b,...
-        foo,baz,...
-        foo2,..."""
-    keys = dict_list[0].keys()
-    keystring = ",".join(keys)
-    outfile.write(keystring + "\n")
-    for item in dict_list:
-        values = [str(item.get(k,'')) for k in keys]
-        valstring = ",".join(values)
-        outfile.write(valstring + "\n")
+def read_from_csv(path):
+    row_data = []
+    with open(path, 'rb') as csv_file:
+        dict_reader = csv.DictReader(csv_file)
+        for line in dict_reader:
+            row_data.append(line)
+    return row_data
+
+def write_to_csv(dict_list, path):
+    keys = set(itertools.chain(*dict_list))
+    with open(path, 'wb') as csv_file:
+        dict_writer = csv.DictWriter(csv_file, keys)
+        dict_writer.writeheader()
+        for d in dict_list:
+            dict_writer.writerow(d)
 
 # time_function(import_is_finished)
 
 def time_to_add_1_calculations(dataset):
     info = dataset.get_info()
-    #print info['schema']
-    #for itemkey,item in info['schema']:
-    #    if item['simpletype'] == 'float':
-    #        calc_col_1 = itemkey
-    #        break
     calc_col_1 = '_gps_latitude'
     before = time.time()
+    #TODO: calculation relevant to dataset
     dataset.add_calculation('true = "True"')
     after = time.time()
     return after - before
@@ -68,10 +69,6 @@ def time_to_add_5_calculations_1by1(dataset):
     info = dataset.get_info()
     calcs = ['true = "T"', 'f = "F"', 'one = "1"', 'two = "2"', 'to = "To"']
     # TODO: more sophisticated calculations?
-    #for itemkey,item in info['schema']:
-    #    if item['simpletype'] == 'float':
-    #        calc_col_1 = itemkey
-    #        break
     sleep_between_submissions = 0
     calc_col_1 = '_gps_latitude'
     before = time.time()
@@ -130,26 +127,26 @@ if __name__ == "__main__":
             if x not in valid_test_sizes]) > 1
 
     # choosing between 100, 1000, 10000, 100000
-    if invalid_test_size: 
+    if invalid_test_size:
         print """provide size of datasets, like one of:
                    python benchmark.py 1000
                    python benchmark.py 100 1000 10000
                 Allowed test sizes are %s
-             """ % " ".join(valid_test_sizes) 
+             """ % " ".join(valid_test_sizes)
         sys.exit()
 
     DIR = 'csvs/'
     # test on upload
-    curr_time = time.strftime('%Y-%m-%d-%H-%M-%S')
-    hostname = os.uname()[1]
-    outfile = open('logs/%s-%s.log' % (hostname, curr_time), 'wb')
-    results = []
+    benchmarkfile = 'benchmark.csv'
+    try:
+        with open(benchmarkfile) as f: pass
+    except IOError as e:
+        with open(benchmarkfile, 'wb') as f: f.write('')
+    results = read_from_csv(benchmarkfile)
     for test_size in test_sizes:
         test_str = str(test_size)
         water_file = DIR + test_size + '/water.csv'
         education_file = DIR + test_size + '/education.csv'
-        results = results + run_test_suite([water_file])
-        #results = results + run_test_suite([water_file, education_file])
-    write_to_csv(results, outfile)
-    outfile.close()
-
+        new_dict = run_test_suite([water_file])
+        results += new_dict
+    write_to_csv(results, benchmarkfile)
