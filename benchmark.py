@@ -38,8 +38,7 @@ def run_test_suite(dataset_file_path_list):
         d['col'] = info['num_columns']
         d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
         d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
-        # batch calculations needs bamboo fixes 
-        #d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
+        d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
         d['update_1_time'] = time_to_add_1_update(dataset)
         d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
         d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
@@ -78,7 +77,7 @@ def time_to_add_5_calculations_1by1(dataset):
     info = dataset.get_info()
     calcs = ['true = "T"', 'f = "F"', 'one = "1"', 'two = "2"', 'to = "To"']
     # TODO: more sophisticated calculations?
-    sleep_between_submissions = 0
+    sleep_between_submissions = 1
     calc_col_1 = '_gps_latitude'
     before = time.time()
     for calc in calcs:
@@ -86,6 +85,16 @@ def time_to_add_5_calculations_1by1(dataset):
         time.sleep(sleep_between_submissions)
     after = time.time()
     return after - before - sleep_between_submissions * len(calcs)
+
+@print_that_function_is_running
+def time_to_add_5_calculations_batch(dataset):
+    info = dataset.get_info()
+    calcs = ['t2 = "T"', 'f2 = "F"', 'one2 = "1"', 'two2 = "2"', 'to2 = "To"']
+    # TODO: more sophisticated calculations?
+    before = time.time()
+    dataset.add_calculations(calcs)
+    after = time.time()
+    return after - before
 
 @print_that_function_is_running
 def time_to_add_1_update(dataset):
