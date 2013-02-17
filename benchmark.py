@@ -12,7 +12,16 @@ from pybamboo.exceptions import PyBambooException
 
 URL = 'http://localhost:8080'
 
+def print_that_function_is_running(func):
+    """ If you put this decorator around a function, you'll see in stdout when
+        func starts running. """
+    def wrapped_func(*args, **kwargs):
+        print "Running function: ", func.__name__
+        return func(*args, **kwargs)
+    return wrapped_func
+
 def run_test_suite(dataset_file_path_list):
+    print "running test suite for %s" % " ".join(dataset_file_path_list)
     alldata = []
     for dataset_name in dataset_file_path_list:
         d = {}
@@ -27,13 +36,13 @@ def run_test_suite(dataset_file_path_list):
         info = dataset.get_info()
         d['row'] = info['num_rows']
         d['col'] = info['num_columns']
-        #d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
-        #d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
-        # following needs pybamboo fixes
+        d['add_1_calculations_time'] = time_to_add_1_calculations(dataset)
+        d['add_5_calculations_1by1_time'] = time_to_add_5_calculations_1by1(dataset)
+        # batch calculations needs bamboo fixes 
         #d['add_5_calculations_batch_time'] = time_to_add_5_calculations_batch(dataset)
-        #d['update_1_time'] = time_to_add_1_update(dataset)
-        #d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
-        #d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
+        d['update_1_time'] = time_to_add_1_update(dataset)
+        d['update_5_1by1_time'] = time_to_add_5_update_1by1(dataset)
+        d['update_5_batch_time'] = time_to_add_5_update_batch(dataset)
         dataset.delete()
         alldata.append(d)
     return alldata
@@ -54,8 +63,7 @@ def write_to_csv(dict_list, path):
         for d in dict_list:
             dict_writer.writerow(d)
 
-# time_function(import_is_finished)
-
+@print_that_function_is_running
 def time_to_add_1_calculations(dataset):
     info = dataset.get_info()
     calc_col_1 = '_gps_latitude'
@@ -65,6 +73,7 @@ def time_to_add_1_calculations(dataset):
     after = time.time()
     return after - before
 
+@print_that_function_is_running
 def time_to_add_5_calculations_1by1(dataset):
     info = dataset.get_info()
     calcs = ['true = "T"', 'f = "F"', 'one = "1"', 'two = "2"', 'to = "To"']
@@ -78,6 +87,7 @@ def time_to_add_5_calculations_1by1(dataset):
     after = time.time()
     return after - before - sleep_between_submissions * len(calcs)
 
+@print_that_function_is_running
 def time_to_add_1_update(dataset):
     # TODO: more sophisticated updates
     update = [{"mylga" : "test"}]
@@ -86,6 +96,7 @@ def time_to_add_1_update(dataset):
     after = time.time()
     return after - before
 
+@print_that_function_is_running
 def time_to_add_5_update_1by1(dataset):
     updates = [{"mylga" : "test"},
                {"mylga" : "test1"},
@@ -100,6 +111,7 @@ def time_to_add_5_update_1by1(dataset):
     after = time.time()
     return after - before - sleep_between_submissions * len(updates)
 
+@print_that_function_is_running
 def time_to_add_5_update_batch(dataset):
     updates = [{"mylga" : "test"},
                {"mylga" : "test1"},
@@ -111,6 +123,7 @@ def time_to_add_5_update_batch(dataset):
     after = time.time()
     return after - before
 
+@print_that_function_is_running
 def time_till_import_is_finished(dataset):
     before = time.time()
     state = dataset.get_info()['state']
@@ -149,4 +162,4 @@ if __name__ == "__main__":
         education_file = DIR + test_size + '/education.csv'
         new_dict = run_test_suite([water_file])
         results += new_dict
-    write_to_csv(results, benchmarkfile)
+        write_to_csv(results, benchmarkfile) # write immediately
