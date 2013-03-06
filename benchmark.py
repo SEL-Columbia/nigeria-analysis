@@ -4,6 +4,7 @@ import time
 import json
 import sys
 import os
+import random
 
 from pybamboo.dataset import Dataset
 from pybamboo.connection import Connection
