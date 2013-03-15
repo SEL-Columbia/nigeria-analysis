@@ -9,9 +9,7 @@ import random
 from pybamboo.dataset import Dataset
 from pybamboo.connection import Connection
 from pybamboo.exceptions import PyBambooException
-
-
-URL = 'http://localhost:8080'
+from pybamboo.exceptions import ErrorParsingBambooData
 
 def print_that_function_is_running(func):
     """ If you put this decorator around a function, you'll see in stdout when
@@ -143,6 +141,9 @@ def time_till_import_is_finished(dataset):
     after = time.time()
     return after - before
 
+
+URL = 'http://localhost:8080'
+
 if __name__ == "__main__":
     valid_test_sizes = ['1', '10', '100', '1000', '10000', '100000']
     num_iterations = int(sys.argv[1])
@@ -174,7 +175,11 @@ if __name__ == "__main__":
             test_str = str(test_size)
             water_file = DIR + test_size + '/water.csv'
             education_file = DIR + test_size + '/education.csv'
-            new_dict = run_test_suite([water_file])
-            results += new_dict
-            write_to_csv(results, benchmarkfile) # write immediately
-            time.sleep(30)
+            try:
+                new_dict = run_test_suite([water_file])
+                results += new_dict
+                write_to_csv(results, benchmarkfile) # write immediately
+                time.sleep(30)
+            except ErrorParsingBambooData as e:
+                print e
+                pass
